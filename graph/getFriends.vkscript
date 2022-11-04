@@ -1,0 +1,18 @@
+var user_ids = Args.uids.split(",");
+var i = 0;
+var uid = 0;
+var friends = [];
+var friends_list = [];
+
+while (i < user_ids.length)
+{
+  uid = parseInt(user_ids[i]);
+  friends = API.friends.get({"user_id": uid});
+  if (friends.items.length)
+  {
+    friends_list = friends_list + [uid, friends];
+  }
+  i = i + 1;
+}
+
+return friends_list;
