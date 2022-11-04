@@ -1,54 +1,65 @@
-import vk_api
 from time import sleep
-import pickle
+from requests import get
+from json import loads
+from pickle import dump
 from datetime import datetime
 
-"""
-Файл private.txt должен иметь следующее содержание:
-Логин (или телефон)
-Пароль
-ID приложения (app_id)
-Ключ доступа (access_token)
-"""
-with open('private.txt') as file:
-    login, password, app_id, access_token = file.read().split('\n')
+with open('token.txt') as file:
+    access_token = file.read().rstrip()
 
 with open('IDs.txt') as file:
     IDs = file.read().split('\n')
 
-vk_session = vk_api.VkApi(login, password)
-vk_session.auth()
-vk = vk_session.get_api()
+def getFriends(IDs):    
+    if len(IDs) <= 25:
+        uids = ','.join(IDs)
+        response = get(f'https://api.vk.com/method/execute.getFriends?&access_token={access_token}&uids={uids}&v=5.131').text
+        return loads(response)['response']
+    else:
+        parts = (','.join(IDs[i:i+25]) for i in range(0, len(IDs), 25))
+        result = []
+        for part in parts:
+            response = get(f'https://api.vk.com/method/execute.getFriends?&access_token={access_token}&uids={part}&v=5.131').text
+            result.extend(loads(response)['response'])
+            sleep(0.1)
+        return result
 
-edges = []
-first_friends = []
-for user_id in IDs:
-    try:
-        friends = vk.friends.get(user_id = user_id)['items']
-        for friend in friends:
-            first_friends.append(friend)
-            edges.append((int(user_id), friend))
-        sleep(0.35)
-    except Exception as e:
-        with open('logs.txt', 'a') as logs:
-            logs.write(f'[{datetime.now()}] Ошибка с профилем {user_id}: {e}\n')
-"""
-first_friends = set(first_friends)
-print(len(first_friends))
+def process_friends(response, edges, all_unique):
+    unique = set()
+    for i in range(0, len(response), 2):
+        edges[response[i]] = set(response[i+1]['items'])
+        for elem in response[i+1]['items']:
+            unique.add(str(elem))
+            all_unique.add(elem)
+    return list(unique)
 
-for user_id in first_friends:
-    try:
-        second_friends = vk.friends.get(user_id = user_id)['items']
-        for friend in second_friends:
-            edges.append((int(user_id), friend))
-        sleep(0.35)
-    except Exception as e:
-        with open('logs.txt', 'a') as logs:
-            logs.write(f'[{datetime.now()}] Ошибка с профилем {user_id}: {e}\n')
-"""
-total_edges = set(tuple(sorted(edge)) for edge in edges)
-print(len(total_edges))
-timestamp = datetime.now().strftime('%d_%m_%Y__%H_%M_%S')
-with open(f'result_{timestamp}.pickle', 'wb') as file:
-    pickle.dump(total_edges, file)
+def save(friends):
+    timestamp = datetime.now().strftime('%d_%m_%Y__%H_%M_%S')
+    with open(f'result_{timestamp}.pickle', 'wb') as file:
+        dump(friends, file)
 
+def remove_leaves(edges, nodes):
+    branches = set(edges.keys())
+    leaves = nodes - branches
+    for k, v in edges.items():
+        for leaf in leaves:
+            edges[k].discard(leaf)   
+
+def main(depth=2):
+    edges = {}
+    all_unique_friends = set()
+    unique_friends = IDs
+    while depth > 0:
+        response = getFriends(unique_friends)
+        unique_friends = process_friends(response, edges, all_unique_friends)
+        depth-=1
+    recover_response = getFriends(unique_friends)
+    for i in range(0, len(recover_response), 2):
+        recovered = set(recover_response[i+1]['items']) & all_unique_friends
+        if recovered:
+            edges[recover_response[i]] = recovered
+    remove_leaves(edges, all_unique_friends)
+    save(edges)
+    
+if __name__ == '__main__':
+    main(2)
