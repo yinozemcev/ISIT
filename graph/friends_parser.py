@@ -38,13 +38,6 @@ def save(friends):
     with open(f'result_{timestamp}.pickle', 'wb') as file:
         dump(friends, file)
 
-def remove_leaves(edges, nodes):
-    branches = set(edges.keys())
-    leaves = nodes - branches
-    for k, v in edges.items():
-        for leaf in leaves:
-            edges[k].discard(leaf)   
-
 def main(depth=2):
     edges = {}
     all_unique_friends = set()
@@ -58,7 +51,6 @@ def main(depth=2):
         recovered = set(recover_response[i+1]['items']) & all_unique_friends
         if recovered:
             edges[recover_response[i]] = recovered
-    remove_leaves(edges, all_unique_friends)
     save(edges)
     
 if __name__ == '__main__':
