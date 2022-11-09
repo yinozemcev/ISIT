@@ -45,7 +45,7 @@ def eigenvector(G):
     max_eigenvector = max(eigenvector, key=eigenvector.get)
     print(f'Самый центральный по собственному значению: {max_eigenvector}')
     
-def closeness(G):
+def closeness(G, graph):
     sparse = networkx.to_scipy_sparse_matrix(G)
     keys = tuple(graph.keys())
     closeness = Closeness(method = 'approximate', n_jobs = 8)
@@ -72,6 +72,6 @@ if __name__ == '__main__':
     print(f'Удалено {len(leaves)} листьев')
     print(f'В графе {G.number_of_nodes()} узлов и {G.number_of_edges()} рёбер')
 
-    eigenvector(G)
-    closeness(G)
-    betweenness(G)
+    #eigenvector(G)
+    closeness(G, graph)
+    #betweenness(G)
