@@ -4,14 +4,14 @@ import networkx
 from sknetwork.ranking import Closeness
 from numpy import argmax
 from multiprocessing import Pool
-import time
-import itertools
+from itertools import islice
+from typing import Generator
 
-def chunks(l, n):
+def chunks(l: list, n: int) -> Generator:
     """Divide a list of nodes `l` in `n` chunks"""
     l_c = iter(l)
     while 1:
-        x = tuple(itertools.islice(l_c, n))
+        x = tuple(islice(l_c, n))
         if not x:
             return
         yield x
@@ -72,6 +72,6 @@ if __name__ == '__main__':
     print(f'Удалено {len(leaves)} листьев')
     print(f'В графе {G.number_of_nodes()} узлов и {G.number_of_edges()} рёбер')
 
-    #eigenvector(G)
+    eigenvector(G)
     closeness(G, graph)
-    #betweenness(G)
+    betweenness(G)
