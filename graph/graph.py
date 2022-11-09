@@ -48,7 +48,7 @@ def eigenvector(G):
 def closeness(G):
     sparse = networkx.to_scipy_sparse_matrix(G)
     keys = tuple(graph.keys())
-    closeness = Closeness(method = 'approximate', tol = 0.00001, n_jobs = 8)
+    closeness = Closeness(method = 'approximate', n_jobs = 8)
     max_closeness = argmax(closeness.fit_transform(sparse))
     print(f'Самый центральный по близости: {keys[max_closeness]}')
     
